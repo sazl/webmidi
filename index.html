@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="main.css" />
+</head>
+
+<body>
+
+    <div id="app">
+        <button v-on:click="startSequence">
+            Start
+        </button>
+
+        <button v-on:click="stopSequence">
+            Stop
+        </button>
+
+        <div class="sequencer-activity" v-bind:class="{ 'sequencer-activity--running': sequencerRunning }">
+            S
+        </div>
+
+        <select v-model="midiOutputId">
+            <option disabled value="">Please select one</option>
+            <option v-for="option in midiOutputs" v-bind:value="option.id">
+                {{ option.name }}
+            </option>
+        </select>
+    </div>
+
+    <script src="./webmidi.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <script src="./circular-buffer.js" type="text/javascript"></script>
+    <script src="./native.js" type="text/javascript"></script>
+    </script>
+</body>
+
+</html>

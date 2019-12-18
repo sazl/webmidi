@@ -1,0 +1,9 @@
+.sequencer-activity {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #faa;
+}
+
+.sequencer-activity--running {
+    background: #afa;
+}
