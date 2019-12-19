@@ -26,6 +26,22 @@
                 {{ option.name }}
             </option>
         </select>
+
+        <div class="bpm-controls">
+            <label for="bpm">BPM</label>
+            <input type="range" name="bpm" min="0" max="360" v-model.number="bpm"></input>
+            <span>{{ bpm }}</span>
+        </div>
+
+        <div class="velocity-controls">
+            <label for="velocity">Velocity</label>
+            <input type="range" name="velocity" min="0" max="127" v-model.number="velocity"></input>
+            <span>{{ velocity }}</span>
+        </div>
+
+        <div class="sequence">
+            {{ sequence }}
+        </div>
     </div>
 
     <script src="./webmidi.js"></script>

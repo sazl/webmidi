@@ -2,7 +2,7 @@ let app;
 let midiInputs = [];
 
 const noteToMidi = (noteString) => {
-    const initialNote = 21;
+    const initialNote = 9;
     const [note, octave] = noteString.split('');
     const oddNote = (note == 'F' || note == 'B') ? 0 : 1;
     const index = note.charCodeAt(0) - 65;
@@ -14,8 +14,9 @@ function sleep(ms) {
 }
 
 async function incrementStep() {
-    await sleep(this.multipler - this.multipler / 10);
-    this.time += this.multipler;
+    this.increment = Math.floor(60 / this.bpm * 1000);
+    await sleep(this.increment - Math.floor(this.increment / 100));
+    this.time += this.increment;
 }
 
 async function playSequence() {
@@ -28,19 +29,24 @@ async function playSequence() {
         const channel = 0;
         const noteByte = noteToMidi(note);
 
-        console.log('Sequence Note: ', note, noteByte, this.time)
+        console.log({ note, noteByte, now: new Date().toTimeString(), time: this.time, increment: this.increment, bpm: this.bpm, velocity: this.velocity });
 
         const statusByteOn = (noteOn << 4) + channel;
-        const noteVelocityOn = 127;
+        const noteVelocityOn = this.velocity;
         const midiDataOn = [statusByteOn, noteByte, noteVelocityOn];
+
+        console.log('midi note on', midiDataOn);
 
         this.getMidiOutput().send(midiDataOn, this.time);
 
         const statusByteOff = (noteOff << 4) + channel;
-        const noteVelocityOff = 127;
+        const noteVelocityOff = 0;
         const midiDataOff = [statusByteOff, noteByte, noteVelocityOff];
+        const noteOffTime = this.time + this.increment;
 
-        this.getMidiOutput().send(midiDataOff, this.time + this.multipler / 2);
+        console.log('midi note off', midiDataOff, noteOffTime);
+
+        this.getMidiOutput().send(midiDataOff, noteOffTime);
 
         await this.incrementStep();
     }
@@ -63,6 +69,10 @@ function getMidiOutput() {
 }
 
 function startSequence() {
+    if (this.sequencerRunning) {
+        return;
+    }
+
     this.stopSequence();
 
     console.log('Sequencer Start', new Date());
@@ -107,7 +117,7 @@ function initMidi() {
 
 function init() {
     const sequence = [
-        'C3', 'A3', 'D3', 'E3', 'D3',
+        'C3', 'A3', 'D3', 'E3', 'D3', 'A3', 'E3', 'D3',
     ];
     const sequencerBuffer = CircularBuffer.fromArray(sequence);
 
@@ -115,9 +125,10 @@ function init() {
         el: '#app',
         created: initMidi,
         data: {
-            sequence,
             time: 0,
-            multipler: 1000,
+            bpm: 120,
+            increment: null,
+            velocity: 127,
             sequenceInterval: null,
             sequencerRunning: false,
             sequencerBuffer,
@@ -132,6 +143,12 @@ function init() {
             incrementStep,
             stopSound,
             getMidiOutput,
+        },
+        computed: {
+            sequence: function () {
+                const seq = this.sequencerBuffer._array.slice(0, this.sequencerBuffer.length)
+                return seq.join(' ');
+            }
         }
     });
 }
