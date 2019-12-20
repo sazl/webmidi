@@ -40,6 +40,11 @@
         return circ;
     }
 
+    CircularBuffer.prototype.clear = function () {
+        this.length = 0;
+        this._array = [];
+    }
+
     CircularBuffer.IndexError = {};
 
     scope.CircularBuffer = CircularBuffer;

@@ -8,26 +8,51 @@
 <body>
 
     <div id="app">
-        <button v-on:click="startSequence">
-            Start
-        </button>
+        <div class="transport-controls">
+            <button v-on:click="startSequence">
+                Start
+            </button>
 
-        <button v-on:click="stopSequence">
-            Stop
-        </button>
+            <button v-on:click="stopSequence">
+                Stop
+            </button>
 
-        <div class="sequencer-activity" v-bind:class="{ 'sequencer-activity--running': sequencerRunning }">
-            S
+            <button v-on:click="clearSequence">
+                Clear
+            </button>
+
+            <div class="sequencer-activity" v-bind:class="{ 'sequencer-activity--running': sequencerRunning }">
+                {{ sequencerRunning ? 'R' : 'S' }}
+            </div>
         </div>
 
-        <select v-model="midiOutputId">
-            <option disabled value="">Please select one</option>
-            <option v-for="option in midiOutputs" v-bind:value="option.id">
-                {{ option.name }}
-            </option>
-        </select>
+
+        <div class="midi-input-controls">
+            <label for="midi-input">MIDI Input</label>
+            <select v-model="midiInputId">
+                <option disabled value="">Please select one</option>
+                <option v-for="option in midiInputs" v-bind:value="option.id">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
+
+        <div class="midi-output-controls">
+            <label for="midi-output">MIDI Output</label>
+            <select v-model="midiOutputId" name="midi-output">
+                <option disabled value="">Please select one</option>
+                <option v-for="option in midiOutputs" v-bind:value="option.id">
+                    {{ option.name }}
+                </option>
+            </select>
+        </div>
 
         <div class="bpm-controls">
+
+            <div class="sequencer-tempo">
+
+            </div>
+
             <label for="bpm">BPM</label>
             <input type="range" name="bpm" min="0" max="360" v-model.number="bpm"></input>
             <span>{{ bpm }}</span>
