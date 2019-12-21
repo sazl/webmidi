@@ -9,11 +9,11 @@
 
     <div id="app">
         <div class="transport-controls">
-            <button v-on:click="startSequence">
+            <button v-on:click="startSequence" :disabled="sequencerRunning">
                 Start
             </button>
 
-            <button v-on:click="stopSequence">
+            <button v-on:click="stopSequence" :disabled="!sequencerRunning">
                 Stop
             </button>
 

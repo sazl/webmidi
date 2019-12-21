@@ -11,6 +11,10 @@
     }
 
     CircularBuffer.prototype.push = function (item) {
+        if (this.index === null) {
+            this.index = 0;
+        }
+
         if (this.length == this.size) {
             this._array = CircularBuffer.resizeArray(this._array, this.length * 2);
             this.size = this._array.length;
@@ -21,6 +25,10 @@
     }
 
     CircularBuffer.prototype.pop = function () {
+        if (this.index === null) {
+            return null;
+        }
+
         const index = this.index % this.length;
         const value = this._array[index];
         this.index = index + 1;
@@ -43,6 +51,11 @@
     CircularBuffer.prototype.clear = function () {
         this.length = 0;
         this._array = [];
+        this.index = null;
+    }
+
+    CircularBuffer.prototype.isEmpty = function () {
+        return this.length === 0;
     }
 
     CircularBuffer.IndexError = {};

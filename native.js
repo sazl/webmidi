@@ -26,20 +26,52 @@ const MIDI_TO_NOTE = {
     64: 'E4',
     65: 'F4',
     67: 'G4',
+    69: 'A5',
+    71: 'B5',
+    72: 'C5',
+    74: 'D5',
+    76: 'E5',
 }
 
 const midiToNote = (midiNote) => {
     return MIDI_TO_NOTE[midiNote] || 'XX';
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+function incrementStep() {
+    this.increment = 60.0 / this.bpm;
+    this.nextNoteTime += 0.25 * this.increment;
 }
 
-async function incrementStep() {
-    this.increment = Math.floor(60 / this.bpm * 1000);
-    await sleep(this.increment - Math.floor(this.increment / 100));
-    this.time += this.increment;
+function playSequenceStep() {
+    while ((this.nextNoteTime < this.audioContext.currentTime + this.timerLookahead / 1000) && !this.sequencerBuffer.isEmpty()) {
+        const note = this.sequencerBuffer.pop();
+        this.playNote(note);
+        this.incrementStep();
+    }
+}
+
+function playNote(note) {
+    const channel = 0;
+    const noteByte = noteToMidi(note);
+
+    console.log({ note, noteByte, time: this.time, increment: this.increment, bpm: this.bpm, velocity: this.velocity });
+
+    const statusByteOn = (MIDI_NOTE_ON << 4) + channel;
+    const noteVelocityOn = this.velocity;
+    const midiDataOn = [statusByteOn, noteByte, noteVelocityOn];
+
+    console.log('midi note on', midiDataOn);
+
+    this.getMidiOutput().send(midiDataOn, this.nextNoteTime);
+
+    const statusByteOff = (MIDI_NOTE_OFF << 4) + channel;
+    const noteVelocityOff = 0;
+    const midiDataOff = [statusByteOff, noteByte, noteVelocityOff];
+    const noteOffTime = this.nextNoteTime + this.noteLength;
+
+    console.log('midi note off', midiDataOff, noteOffTime);
+
+    this.getMidiOutput().send(midiDataOff, noteOffTime);
 }
 
 async function playSequence() {
@@ -47,29 +79,12 @@ async function playSequence() {
 
     while (this.sequencerRunning) {
         const note = this.sequencerBuffer.pop();
-        const channel = 0;
-        const noteByte = noteToMidi(note);
+        if (!note) {
+            await this.incrementStep();
+            continue;
+        }
 
-        console.log({ note, noteByte, now: new Date().toTimeString(), time: this.time, increment: this.increment, bpm: this.bpm, velocity: this.velocity });
-
-        const statusByteOn = (MIDI_NOTE_ON << 4) + channel;
-        const noteVelocityOn = this.velocity;
-        const midiDataOn = [statusByteOn, noteByte, noteVelocityOn];
-
-        console.log('midi note on', midiDataOn);
-
-        this.getMidiOutput().send(midiDataOn, this.time);
-
-        const statusByteOff = (MIDI_NOTE_OFF << 4) + channel;
-        const noteVelocityOff = 0;
-        const midiDataOff = [statusByteOff, noteByte, noteVelocityOff];
-        const noteOffTime = this.time + this.increment;
-
-        console.log('midi note off', midiDataOff, noteOffTime);
-
-        this.getMidiOutput().send(midiDataOff, noteOffTime);
-
-        await this.incrementStep();
+        this.incrementStep();
     }
 }
 
@@ -139,8 +154,9 @@ function startSequence() {
 
     console.log('Sequencer Start', new Date());
 
-    this.time = 0;
-    this.sequenceInterval = setTimeout(this.playSequence, 0);
+    this.audioContext = new AudioContext();
+    this.nextNoteTime = 0.0;
+    this.sequencerWorker.postMessage('start');
     this.sequencerRunning = true;
 }
 
@@ -151,9 +167,7 @@ function clearSequence() {
 function stopSequence() {
     console.log('Sequencer Stop', new Date());
 
-    clearInterval(this.sequenceInterval);
-    this.stopSound();
-
+    this.sequencerWorker.postMessage('stop');
     this.sequencerRunning = false;
 }
 
@@ -178,6 +192,10 @@ function initMidi() {
         })
 
         this.midiOutputId = this.midiOutputs[0].id;
+        this.sequencerWorker = new Worker('worker.js');
+
+        this.sequencerWorker.postMessage({ interval: this.timerResolution });
+        this.sequencerWorker.onmessage = this.onSequencerEvent;
     }
 
     const onMIDIFailure = () => {
@@ -186,6 +204,16 @@ function initMidi() {
 
     navigator.requestMIDIAccess()
         .then(onMIDISuccess, onMIDIFailure);
+}
+
+function onSequencerEvent(event) {
+    if (event.data == "tick") {
+        //console.log('tick', this.audioContext.currentTime);
+        this.playSequenceStep();
+    }
+    else {
+        console.log("message: " + event.data);
+    }
 }
 
 function init() {
@@ -197,9 +225,15 @@ function init() {
         created: initMidi,
         data: {
             time: 0,
-            bpm: 120,
-            increment: null,
+            bpm: 120.0,
             velocity: 127,
+            timerResolution: 25, // ms
+            timerLookahead: 100, // ms
+            nextNoteTime: 0.0, // seconds
+            noteLength: 0.05, // seconds
+            audioContext: null,
+            sequencerWorker: null,
+            increment: null,
             sequenceInterval: null,
             sequencerRunning: false,
             sequencerBuffer,
@@ -214,6 +248,8 @@ function init() {
             startSequence,
             stopSequence,
             playSequence,
+            playNote,
+            playSequenceStep,
             incrementStep,
             stopSound,
             getMidiInput,
@@ -224,6 +260,7 @@ function init() {
             noteOn,
             midiToNote,
             clearSequence,
+            onSequencerEvent,
         },
         watch: {
             midiInputId: function (val, oldVal) {
