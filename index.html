@@ -47,12 +47,19 @@
             </select>
         </div>
 
+        <div class="timer-controls">
+            <label for="timer-resolution">Timer Resolution</label>
+            <input type="range" name="timer-resolution" min="0" max="200" v-model.number="timerResolution"></input>
+            <span>{{ timerResolution }}</span>
+        </div>
+
+        <div class="note-controls">
+            <label for="note-length">Note Length</label>
+            <input type="range" name="note-length" min="0" max="0.1" step="0.01" v-model.number="noteLength"></input>
+            <span>{{ noteLength }}</span>
+        </div>
+
         <div class="bpm-controls">
-
-            <div class="sequencer-tempo">
-
-            </div>
-
             <label for="bpm">BPM</label>
             <input type="range" name="bpm" min="0" max="360" v-model.number="bpm"></input>
             <span>{{ bpm }}</span>
@@ -64,8 +71,21 @@
             <span>{{ velocity }}</span>
         </div>
 
-        <div class="sequence">
-            {{ sequence }}
+        <div class="sequencer">
+            <div class="sequencer-info">
+                <div>
+                    Current Index: {{ currentIndex }}
+                </div>
+                <div>
+                    Sequence Length: {{ sequence.length }}
+                </div>
+            </div>
+            <ul class="sequencer-list">
+                <li v-for="(element, index) in sequence" class="sequencer-element" v-bind:key="element.id"
+                    v-bind:class="{ 'sequencer-element--active': element.active }">
+                    {{ element.note }}
+                </li>
+            </ul>
         </div>
     </div>
 

@@ -31,6 +31,13 @@ const MIDI_TO_NOTE = {
     72: 'C5',
     74: 'D5',
     76: 'E5',
+    77: 'F5',
+    79: 'G5',
+    81: 'A6',
+    83: 'B6',
+    84: 'C6',
+    86: 'D6',
+    88: 'E6',
 }
 
 const midiToNote = (midiNote) => {
@@ -44,7 +51,9 @@ function incrementStep() {
 
 function playSequenceStep() {
     while ((this.nextNoteTime < this.audioContext.currentTime + this.timerLookahead / 1000) && !this.sequencerBuffer.isEmpty()) {
+        this.currentIndex = this.sequencerBuffer.currentIndex();
         const note = this.sequencerBuffer.pop();
+
         this.playNote(note);
         this.incrementStep();
     }
@@ -60,7 +69,7 @@ function playNote(note) {
     const noteVelocityOn = this.velocity;
     const midiDataOn = [statusByteOn, noteByte, noteVelocityOn];
 
-    console.log('midi note on', midiDataOn);
+    console.log('midi note on', midiDataOn, this.nextNoteTime);
 
     this.getMidiOutput().send(midiDataOn, this.nextNoteTime);
 
@@ -72,20 +81,6 @@ function playNote(note) {
     console.log('midi note off', midiDataOff, noteOffTime);
 
     this.getMidiOutput().send(midiDataOff, noteOffTime);
-}
-
-async function playSequence() {
-    console.log('Sequence Play', new Date());
-
-    while (this.sequencerRunning) {
-        const note = this.sequencerBuffer.pop();
-        if (!note) {
-            await this.incrementStep();
-            continue;
-        }
-
-        this.incrementStep();
-    }
 }
 
 function stopSound() {
@@ -155,7 +150,7 @@ function startSequence() {
     console.log('Sequencer Start', new Date());
 
     this.audioContext = new AudioContext();
-    this.nextNoteTime = 0.0;
+    this.nextNoteTime = this.audioContext.currentTime;
     this.sequencerWorker.postMessage('start');
     this.sequencerRunning = true;
 }
@@ -208,12 +203,9 @@ function initMidi() {
 
 function onSequencerEvent(event) {
     if (event.data == "tick") {
-        //console.log('tick', this.audioContext.currentTime);
         this.playSequenceStep();
     }
-    else {
-        console.log("message: " + event.data);
-    }
+    // console.log("message: " + event.data);
 }
 
 function init() {
@@ -234,6 +226,7 @@ function init() {
             audioContext: null,
             sequencerWorker: null,
             increment: null,
+            currentIndex: 0,
             sequenceInterval: null,
             sequencerRunning: false,
             sequencerBuffer,
@@ -247,7 +240,6 @@ function init() {
         methods: {
             startSequence,
             stopSequence,
-            playSequence,
             playNote,
             playSequenceStep,
             incrementStep,
@@ -266,12 +258,22 @@ function init() {
             midiInputId: function (val, oldVal) {
                 this.getMidiInput(oldVal).onmidimessage = null;
                 this.getMidiInput(val).onmidimessage = this.getMidiMessage;
+            },
+            timerResolution: function (val) {
+                this.sequencerWorker.postMessage({ interval: val });
+            },
+            noteLength: function (val) {
+
             }
         },
         computed: {
             sequence: function () {
-                const seq = this.sequencerBuffer._array.slice(0, this.sequencerBuffer.length)
-                return seq.join(' ');
+                const seq = this.sequencerBuffer._array.slice(0, this.sequencerBuffer.length);
+                return seq.map((note, index) => ({
+                    id: `${note}${index}`,
+                    active: index === this.currentIndex,
+                    note
+                }));
             }
         }
     });

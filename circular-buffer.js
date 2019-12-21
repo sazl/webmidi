@@ -24,14 +24,17 @@
         this.length++;
     }
 
+    CircularBuffer.prototype.currentIndex = function () {
+        return this.index;
+    }
+
     CircularBuffer.prototype.pop = function () {
         if (this.index === null) {
             return null;
         }
 
-        const index = this.index % this.length;
-        const value = this._array[index];
-        this.index = index + 1;
+        const value = this._array[this.index];
+        this.index = (this.index + 1) % this.length;
 
         return value;
     }
