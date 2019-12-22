@@ -59,11 +59,8 @@ function playSequenceStep() {
     }
 }
 
-function playNote(note) {
-    const channel = 0;
-    const noteByte = noteToMidi(note);
-
-    console.log({ note, noteByte, time: this.time, increment: this.increment, bpm: this.bpm, velocity: this.velocity });
+function playMidiNote(noteByte, channel) {
+    console.log({ noteByte, time: this.time, increment: this.increment, bpm: this.bpm, velocity: this.velocity });
 
     const statusByteOn = (MIDI_NOTE_ON << 4) + channel;
     const noteVelocityOn = this.velocity;
@@ -81,6 +78,13 @@ function playNote(note) {
     console.log('midi note off', midiDataOff, noteOffTime);
 
     this.getMidiOutput().send(midiDataOff, noteOffTime);
+}
+
+function playNote(note) {
+    const channel = 0;
+    const noteByte = noteToMidi(note);
+
+    this.playMidiNote(noteByte, channel);
 }
 
 function stopSound() {
@@ -253,6 +257,7 @@ function init() {
             midiToNote,
             clearSequence,
             onSequencerEvent,
+            playMidiNote,
         },
         watch: {
             midiInputId: function (val, oldVal) {
