@@ -64,14 +64,6 @@
                                                 <span>Stop</span>
                                             </button>
 
-                                            <button class="button is-warning" v-on:click="clearSequence"
-                                                :disabled="!sequence.length">
-                                                <span class="icon">
-                                                    <i class="fas fa-trash"></i>
-                                                </span>
-                                                <span>Clear</span>
-                                            </button>
-
                                             <button class="button is-rounded"
                                                 v-bind:class="{ 'is-success': sequencerRunning }">
                                                 <span class="icon">
@@ -226,6 +218,18 @@
                                     <div class="content">
                                         <div class="sequencer">
                                             <div class="sequencer-info">
+                                                <div class="field">
+                                                    <label class="label is-normal">
+                                                        Controls
+                                                    </label>
+                                                    <button class="button is-warning" v-on:click="clearSequence"
+                                                        :disabled="!sequence.length">
+                                                        <span class="icon">
+                                                            <i class="fas fa-trash"></i>
+                                                        </span>
+                                                        <span>Clear</span>
+                                                    </button>
+                                                </div>
                                                 <div class="field">
                                                     <label class="label is-normal">
                                                         Current Index
