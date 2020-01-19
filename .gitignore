@@ -1,3 +1,5 @@
 *.flac
 *.mp3
 *.asd
+node_modules/
+dist/

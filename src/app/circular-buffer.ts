@@ -61,6 +61,10 @@
         return this.length === 0;
     }
 
+    CircularBuffer.prototype.toArray = function () {
+        return this._array.slice(0, this.length);
+    }
+
     CircularBuffer.IndexError = {};
 
     scope.CircularBuffer = CircularBuffer;
