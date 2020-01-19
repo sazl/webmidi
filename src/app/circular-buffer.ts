@@ -1,16 +1,21 @@
-(function (scope) {
-    'use strict';
+class CircularBuffer {
 
-    const DEFAULT_SIZE = 64;
+    static DEFAULT_SIZE = 64;
+    static IndexError: Error;
 
-    function CircularBuffer(n = DEFAULT_SIZE) {
+    _array: Array<object>;
+    length: number;
+    size: number;
+    index: number;
+
+    constructor(n = CircularBuffer.DEFAULT_SIZE) {
         this._array = new Array(n);
         this.length = 0;
         this.size = n;
         this.index = 0;
     }
 
-    CircularBuffer.prototype.push = function (item) {
+    push(item) {
         if (this.index === null) {
             this.index = 0;
         }
@@ -24,11 +29,11 @@
         this.length++;
     }
 
-    CircularBuffer.prototype.currentIndex = function () {
+    currentIndex() {
         return this.index;
     }
 
-    CircularBuffer.prototype.pop = function () {
+    pop() {
         if (this.index === null) {
             return null;
         }
@@ -39,33 +44,29 @@
         return value;
     }
 
-    CircularBuffer.resizeArray = function (inputArray, newSize, defaultValue = null) {
+    clear() {
+        this.length = 0;
+        this._array = [];
+        this.index = null;
+    }
+
+    isEmpty() {
+        return this.length === 0;
+    }
+
+    toArray() {
+        return this._array.slice(0, this.length);
+    }
+
+    static resizeArray(inputArray, newSize, defaultValue = null) {
         return [...inputArray, ...Array(Math.max(newSize - inputArray.length, 0)).fill(defaultValue)];
     }
 
-    CircularBuffer.fromArray = function (arrayValues) {
+    static fromArray(arrayValues) {
         const circ = new CircularBuffer(arrayValues.length);
         for (const value of arrayValues) {
             circ.push(value);
         }
         return circ;
     }
-
-    CircularBuffer.prototype.clear = function () {
-        this.length = 0;
-        this._array = [];
-        this.index = null;
-    }
-
-    CircularBuffer.prototype.isEmpty = function () {
-        return this.length === 0;
-    }
-
-    CircularBuffer.prototype.toArray = function () {
-        return this._array.slice(0, this.length);
-    }
-
-    CircularBuffer.IndexError = {};
-
-    scope.CircularBuffer = CircularBuffer;
-}(this));
+}
