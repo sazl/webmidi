@@ -23,7 +23,7 @@ class Sequencer {
     }
 
     playSequenceStep() {
-        while ((this.nextNoteTime < this.audioContext.currentTime + this.timerLookahead / 1000) && !this.sequencerBuffer.isEmpty()) {
+        while ((this.nextNoteTime < this.audioContext.current_time + this.timerLookahead / 1000) && !this.sequencerBuffer.isEmpty()) {
             this.currentIndex = this.sequencerBuffer.currentIndex();
             const step = this.sequencerBuffer.pop();
 
@@ -154,41 +154,6 @@ class Sequencer {
 
         this.sequencerWorker.postMessage('stop');
         this.sequencerRunning = false;
-    }
-
-    initMidi() {
-        const onMIDISuccess = (midiAccess) => {
-            console.log(midiAccess);
-
-            const inputs = midiAccess.inputs;
-
-            inputs.forEach((inputDevice) => {
-                this.midiInputMap[inputDevice.id || 'unknown'] = inputDevice;
-                this.midiInputs.push(inputDevice);
-            })
-
-            this.midiInputId = this.midiInputs[0].id;
-
-            const outputs = midiAccess.outputs;
-
-            outputs.forEach((outputDevice) => {
-                this.midiOutputMap[outputDevice.id || 'unknown'] = outputDevice;
-                this.midiOutputs.push(outputDevice);
-            })
-
-            this.midiOutputId = this.midiOutputs[0].id;
-            this.sequencerWorker = new Worker('worker.js');
-
-            this.sequencerWorker.postMessage({ interval: this.timerResolution });
-            this.sequencerWorker.onmessage = this.onSequencerEvent;
-        }
-
-        const onMIDIFailure = () => {
-            console.log('Could not access your MIDI devices.');
-        }
-
-        navigator.requestMIDIAccess()
-            .then(onMIDISuccess, onMIDIFailure);
     }
 
     onSequencerEvent(event) {
