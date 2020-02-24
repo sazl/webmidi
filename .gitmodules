@@ -1,0 +1,3 @@
+[submodule "bs_tea_ocaml"]
+	path = bs_tea_ocaml
+	url = git@github.com:sazl/webmidi_bs_tea_ocaml.git
