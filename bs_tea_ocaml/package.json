@@ -27,6 +27,7 @@
     "serve": "^11.3.0"
   },
   "dependencies": {
-    "bs-css": "^11.0.0"
+    "bs-css": "^11.0.0",
+    "bs-webworkers": "^0.2.4"
   }
 }

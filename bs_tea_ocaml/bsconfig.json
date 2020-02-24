@@ -17,7 +17,8 @@
   "suffix": ".bs.js",
   "refmt": 3,
   "bs-dependencies": [
-    "bucklescript-tea"
+    "bucklescript-tea",
+    "bs-webworkers"
   ],
   "bsc-flags": [
     "-bs-super-errors -no-alias-deps",
