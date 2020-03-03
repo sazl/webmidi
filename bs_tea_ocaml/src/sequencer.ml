@@ -7,9 +7,17 @@ type t = {
   mutable step : int;
   mutable sequencer_worker : WebWorkers.webWorker;
   mutable is_sequencer_running : bool;
-  mutable audio_context : Webaudio.audio_context;
-  sequence_buffer : Step.step Vector.t;
+  mutable audio_context : Webaudio.audio_context option;
+  sequence_buffer : (Step.step option) Vector.t;
 }
+
+let get_option x =
+  match x with
+  | Some y -> y
+  | _ -> raise (Failure "no option value")
+
+let current_sequencer: t option ref = ref None
+let default_buffer_size = 16
 
 let increment_step t = (
   t.current_index <- (t.current_index + 1) mod (Vector.length t.sequence_buffer);
@@ -18,7 +26,7 @@ let increment_step t = (
 )
 
 let is_next_note_ready t =
-  t.next_note_time < (Webaudio.get_current_time t.audio_context) +. t.timer_lookahead /. 1000.0 &&
+  t.next_note_time < (Webaudio.get_current_time (get_option t.audio_context)) +. t.timer_lookahead /. 1000.0 &&
   Vector.is_empty t.sequence_buffer
 
 let play_step t (step : Step.step) =
@@ -29,8 +37,41 @@ let play_sequence_step t =
   if is_next_note_ready t
   then (
     let step = Vector.pop t.sequence_buffer in
-    play_step t step;
+    match step with
+    | Some s -> play_step t s
+    | None -> ();
     increment_step t
+  )
+
+let on_sequencer_event event =
+  let seq = get_option !current_sequencer in
+  let data: Worker.message = WebWorkers.MessageEvent.data(event) in
+  if data.action == "tick"
+  then play_sequence_step seq
+
+let init_worker () =
+  let worker = WebWorkers.create_webworker "worker.bs.js" in
+  let message: Worker.message = { action = "set_interval"; interval = 0.0 } in (
+    WebWorkers.postMessage worker message;
+    WebWorkers.onMessage worker on_sequencer_event;
+  )
+
+let init () =
+  let default_sequencer = {
+    bpm = 0;
+    increment = 0.0;
+    timer_lookahead = 0.0;
+    next_note_time = 0.0;
+    current_index = 0;
+    step = 0;
+    is_sequencer_running = false;
+    audio_context = None;
+    sequencer_worker = WebWorkers.create_webworker "worker.bs.js";
+    sequence_buffer = Vector.make default_buffer_size ~dummy: None;
+  } in (
+    current_sequencer := Some default_sequencer;
+    init_worker ();
+    default_sequencer
   )
 
 let stop_sequence t = (
@@ -42,17 +83,26 @@ let start_sequence t =
   if t.is_sequencer_running
   then (
     stop_sequence t;
-    t.audio_context <- Webaudio.create_audio_context ();
-    t.next_note_time <- Webaudio.get_current_time t.audio_context;
-    WebWorkers.postMessage t.sequencer_worker "start";
-    t.is_sequencer_running <- true;
+    let audio_context = Webaudio.create_audio_context () in (
+      t.audio_context <- Some audio_context;
+      t.next_note_time <- Webaudio.get_current_time audio_context;
+      WebWorkers.postMessage t.sequencer_worker "start";
+      t.is_sequencer_running <- true;
+    )
   )
 
-let init =
-  let worker = WebWorkers.create_webworker "worker.bs.js" in
-  let message = [%bs.obj { interval = 0 } ] in
-  WebWorkers.postMessage worker message
-
 let clear_sequence t = (
-  Vector.clear t.sequence_buffer
+  Vector.clear t.sequence_buffer;
+  t
 )
+
+let init_midi () =
+  let on_midi_success (midi_access : Midi.midi_access) =
+    let inputs: Midi.midi_input_map = midi_access#inputs in
+    let outputs = midi_access#outputs in
+    init_worker ()
+  in
+  let on_midi_failure _ =
+    Js.log("Could not access your MIDI device")
+  in
+  Midi.request_access ();
