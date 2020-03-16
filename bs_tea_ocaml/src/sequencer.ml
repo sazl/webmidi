@@ -6,7 +6,10 @@ type t = {
   mutable current_index : int;
   mutable step : int;
   mutable sequencer_worker : WebWorkers.webWorker;
-  mutable is_sequencer_running : bool;
+  mutable is_running : bool;
+
+  mutable midi_inputs : Midi.midi_input_map option;
+  mutable midi_outputs : Midi.midi_output_map option;
   mutable audio_context : Webaudio.audio_context option;
   sequence_buffer : (Step.step option) Vector.t;
 }
@@ -56,38 +59,60 @@ let init_worker () =
     WebWorkers.onMessage worker on_sequencer_event;
   )
 
+let init_midi t =
+  let on_midi_success (midi_access: Midi.midi_access) =
+    let inputs = midi_access##inputs in
+    let outputs = midi_access##outputs in
+      t.midi_inputs <- Some inputs;
+      t.midi_outputs <- Some outputs;
+      Js.Promise.resolve ()
+  in
+  let on_midi_failure _ =
+    Js.log("Could not access your MIDI device");
+    Js.Promise.resolve ()
+  in
+    Midi.request_access ()
+    |> Js.Promise.then_ on_midi_success
+    |> Js.Promise.catch on_midi_failure
+
 let init () =
-  let default_sequencer = {
+  let default_sequencer: t = {
     bpm = 0;
     increment = 0.0;
     timer_lookahead = 0.0;
     next_note_time = 0.0;
     current_index = 0;
     step = 0;
-    is_sequencer_running = false;
+    is_running = false;
+    midi_inputs = None;
+    midi_outputs = None;
     audio_context = None;
     sequencer_worker = WebWorkers.create_webworker "worker.bs.js";
     sequence_buffer = Vector.make default_buffer_size ~dummy: None;
   } in (
     current_sequencer := Some default_sequencer;
     init_worker ();
+    init_midi default_sequencer;
     default_sequencer
   )
 
 let stop_sequence t = (
   WebWorkers.postMessage t.sequencer_worker "stop";
-  t.is_sequencer_running <- false
+  t.is_running <- false;
+  t
 )
 
 let start_sequence t =
-  if t.is_sequencer_running
-  then (
+  if t.is_running
+  then t
+  else (
     stop_sequence t;
     let audio_context = Webaudio.create_audio_context () in (
       t.audio_context <- Some audio_context;
       t.next_note_time <- Webaudio.get_current_time audio_context;
       WebWorkers.postMessage t.sequencer_worker "start";
-      t.is_sequencer_running <- true;
+      t.is_running <- true;
+      t
     )
   )
 
@@ -95,14 +120,3 @@ let clear_sequence t = (
   Vector.clear t.sequence_buffer;
   t
 )
-
-let init_midi () =
-  let on_midi_success (midi_access : Midi.midi_access) =
-    let inputs: Midi.midi_input_map = midi_access#inputs in
-    let outputs = midi_access#outputs in
-    init_worker ()
-  in
-  let on_midi_failure _ =
-    Js.log("Could not access your MIDI device")
-  in
-  Midi.request_access ();

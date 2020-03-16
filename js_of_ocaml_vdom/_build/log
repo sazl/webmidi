@@ -1,10 +1,10 @@
-# dune external-lib-deps --missing counters.bc.js
+# dune build
 # OCAMLPARAM: unset
-# Workspace root: /mnt/c/Users/samiz/Desktop/Synth/webmidi/bs_tea_ocaml/js_of_ocaml_vdom
-$ /usr/bin/nproc > /tmp/dune01bb66.output 2> /dev/null
+# Workspace root: /mnt/c/Users/samiz/Desktop/Synth/webmidi/js_of_ocaml_vdom
+$ /usr/bin/nproc > /tmp/dune1b99b1.output 2> /dev/null
 # Auto-detected concurrency: 8
 # disable binary cache
-$ /home/sami/.opam/4.09.0/bin/ocamlc.opt -config > /tmp/dunea1298e.output
+$ /home/sami/.opam/4.09.0/bin/ocamlc.opt -config > /tmp/dune2902d9.output
 # Dune context:
 #  { name = "default"
 #  ; kind = "default"
@@ -27,10 +27,10 @@ $ /home/sami/.opam/4.09.0/bin/ocamlc.opt -config > /tmp/dunea1298e.output
 #      ; "INSIDE_DUNE" : "1"
 #      ;
 #      "OCAMLFIND_IGNORE_DUPS_IN" :
-#        "/mnt/c/Users/samiz/Desktop/Synth/webmidi/bs_tea_ocaml/js_of_ocaml_vdom/_build/install/default/lib"
+#        "/mnt/c/Users/samiz/Desktop/Synth/webmidi/js_of_ocaml_vdom/_build/install/default/lib"
 #      ;
 #      "OCAMLPATH" :
-#        "/mnt/c/Users/samiz/Desktop/Synth/webmidi/bs_tea_ocaml/js_of_ocaml_vdom/_build/install/default/lib"
+#        "/mnt/c/Users/samiz/Desktop/Synth/webmidi/js_of_ocaml_vdom/_build/install/default/lib"
 #      ; "OCAML_COLOR" : "always"
 #      ; "OPAMCOLOR" : "always"
 #      }
@@ -117,3 +117,13 @@ $ /home/sami/.opam/4.09.0/bin/ocamlc.opt -config > /tmp/dunea1298e.output
 #        Some External "/home/sami/.opam/4.09.0/bin/ocamlobjinfo.opt"
 #      }
 #  }
+$ (cd _build/default && /home/sami/.opam/4.09.0/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -bin-annot -I .counters.eobjs/byte -I /home/sami/.opam/4.09.0/lib/gen_js_api -I /home/sami/.opam/4.09.0/lib/ocaml-vdom -no-alias-deps -opaque -o .counters.eobjs/byte/dune__exe__Counters.cmo -c -impl counters.ml)
+$ (cd _build/default && /home/sami/.opam/4.09.0/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -g -o counters.bc /home/sami/.opam/4.09.0/lib/gen_js_api/gen_js_api.cma /home/sami/.opam/4.09.0/lib/ocaml-vdom/vdom.cma .counters.eobjs/byte/dune__exe__Counters.cmo)
+> File "_none_", line 1:
+> Error: Error while linking /home/sami/.opam/4.09.0/lib/gen_js_api/gen_js_api.cma(Ojs):
+>        The external function `caml_pure_js_expr' is not available
+[2]
+$ (cd _build/default && /home/sami/.opam/4.09.0/bin/js_of_ocaml --runtime-only --pretty --source-map-inline -o counters.bc.runtime.js --no-runtime /home/sami/.opam/4.09.0/lib/js_of_ocaml-compiler/runtime.js /home/sami/.opam/4.09.0/lib/gen_js_api/ojs_runtime.js)
+$ (cd _build/default && /home/sami/.opam/4.09.0/bin/js_of_ocaml --pretty --source-map-inline -o .counters.eobjs/byte/dune__exe__Counters.cmo.js --no-runtime /home/sami/.opam/4.09.0/lib/js_of_ocaml-compiler/runtime.js .counters.eobjs/byte/dune__exe__Counters.cmo)
+$ (cd _build/default/.js/gen_js_api && /home/sami/.opam/4.09.0/bin/js_of_ocaml --pretty --source-map-inline -o gen_js_api.cma.js --no-runtime /home/sami/.opam/4.09.0/lib/js_of_ocaml-compiler/runtime.js /home/sami/.opam/4.09.0/lib/gen_js_api/gen_js_api.cma)
+$ (cd _build/default/.js/ocaml-vdom && /home/sami/.opam/4.09.0/bin/js_of_ocaml --pretty --source-map-inline -o vdom.cma.js --no-runtime /home/sami/.opam/4.09.0/lib/js_of_ocaml-compiler/runtime.js /home/sami/.opam/4.09.0/lib/ocaml-vdom/vdom.cma)

@@ -1,43 +1,31 @@
 type midi_note = int
 type midi_data = int list
 
-external request_access : unit -> unit = "requestMidiAccess" [@@bs.val][@@bs.scope "window", "navigator"]
+type midi_input = <
+  on_midi_message : unit -> unit
+> Js.t
 
-class virtual midi_interface = object
-end [@bs]
+type midi_output = <
+  on_midi_message : unit -> unit
+> Js.t
 
-class type virtual _midi_input = object
-  inherit midi_interface
-  method virtual on_midi_message : unit -> unit
-end [@bs]
+type midi_input_map = <
+  inputs : midi_input Js.Dict.t;
+  get : string -> midi_input
+> Js.t
 
-class type virtual _midi_output = object
-  inherit midi_interface
-end [@bs]
+type midi_output_map = <
+  outputs : midi_output Js.Dict.t;
+  get : string -> midi_output
+> Js.t
 
-class virtual _midi_input_map = object
-  method virtual get : string -> _midi_input option
-end [@bs]
+type midi_access = <
+  sysex_enabled : bool;
+  inputs : midi_input_map;
+  outputs : midi_output_map
+> Js.t
 
-type midi_input_map = _midi_input_map
-
-class virtual _midi_output_map = object
-  method virtual get : string -> _midi_output option
-end [@bs]
-
-type midi_output_map = _midi_output_map
-
-class midi_output = object
-  inherit midi_interface
-end [@bs]
-
-class type virtual _midi_access = object
-  method virtual sysex_enabled : bool
-  method virtual inputs : midi_input_map
-  method virtual outputs : midi_output_map
-end [@bs]
-
-type midi_access = _midi_access
+external request_access : unit -> midi_access Js.Promise.t = "requestMidiAccess" [@@bs.val][@@bs.scope "window", "navigator"]
 
 let note_on = 9
 let note_off = 8
